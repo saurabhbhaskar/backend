@@ -1,0 +1,20 @@
+{
+  "name": "magaproject",
+  "version": "1.0.0",
+  "description": "learning a backend developement",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/index.js"
+  },
+  "keywords": [
+    "javascript",
+    "backend",
+    "code"
+  ],
+  "author": "s. bhaskar",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
