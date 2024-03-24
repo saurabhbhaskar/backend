@@ -7,7 +7,7 @@ const router = Router();
 
 
 router.route("/register").post(
-    upload.fields([                // it's middleware, so before registerUser it will execute
+    upload.fields([                // it's middleware, so before registerUser it will execute, it is in multer
         {
             name: "avatar",
             maxCount: 1
