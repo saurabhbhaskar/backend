@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";   // here it is important to write .js
 import {ApiError} from "../utils/ApiError.js"
 import { User } from "../models/user.model.js"
-import { uploadOnCloudinary } from '../utils/cloudinary.js';
+import { uploadOnCloudinary, deleteFromCloudinary } from '../utils/cloudinary.js';
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
@@ -294,6 +294,22 @@ const updateAccountDetails = asyncHandler( async (req, res) => {
 
 })
 
+function extractPublicIdFromUrl(url) {
+    const lastSlashIndex = url.lastIndexOf('/');
+    if (lastSlashIndex === -1) {
+        return null;
+    }
+
+    const dotIndex = url.indexOf('.', lastSlashIndex);
+    if (dotIndex === -1) {
+        return null;
+    }
+
+    const publicId = url.substring(lastSlashIndex + 1, dotIndex);
+    return publicId;
+}
+
+
 const updateUserAvatar = asyncHandler( async (req, res) => {
 
     // the multer middleware is responsible for this
@@ -303,7 +319,16 @@ const updateUserAvatar = asyncHandler( async (req, res) => {
         throw new ApiError(400, "avatar file is missing")
     }
 
+    // console.log(avatarLocalPath)
 
+    // to delete existing file I write below code
+    const userone = await User.findById(req.user?._id)
+    const url = userone?.avatar
+    const publicId = extractPublicIdFromUrl(url);
+    const deleteFile = await deleteFromCloudinary(publicId)
+
+    // console.log(deleteFile)
+    // console.log(publicId)
 
     const avatar = await uploadOnCloudinary(avatarLocalPath)
 
@@ -337,8 +362,10 @@ const updateUserCoverImage = asyncHandler(async(req, res) => {
         throw new ApiError(400, "Cover image file is missing")
     }
 
-    //TODO: delete old image - assignment
-
+    const userone = await User.findById(req.user?._id)
+    const url = userone?.coverImage
+    const publicId = extractPublicIdFromUrl(url);
+    const deleteFile = await deleteFromCloudinary(publicId)
 
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
