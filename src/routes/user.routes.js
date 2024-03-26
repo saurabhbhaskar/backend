@@ -21,7 +21,7 @@ const router = Router();
 router.route("/register").post(
     upload.fields([                // it's middleware, so before registerUser it will execute, it is in multer
         {
-            name: "avatar",
+            name: "avatar",     // by this files we take form req.body get added in local storage
             maxCount: 1
         },
         {
