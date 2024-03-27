@@ -4,7 +4,7 @@ import {User} from "../models/user.model.js"
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
-import {uploadOnCloudinary} from "../utils/cloudinary.js"
+import {uploadOnCloudinary, deleteOnCloudinary} from "../utils/cloudinary.js"
 import { Like } from "../models/like.model.js";
 import { Comment } from "../models/comment.model.js";
 
@@ -12,7 +12,7 @@ import { Comment } from "../models/comment.model.js";
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
 
-    pipeline = []
+    const pipeline = []
 
     if(query){
         pipeline.push(
@@ -103,8 +103,17 @@ const publishAVideo = asyncHandler(async (req, res) => {
         throw new ApiError(400, "All fields are required");
     }
 
-    videoFileLocalPath = req.files?.videoFile[0].path;
-    thumbnailLocalPath = req.files?.thumbnail[0].path;
+    console.log(req.files);
+
+    // videoFileLocalPath = req.files.videoFile[0].path;
+    // thumbnailLocalPath = req.files?.thumbnail[0].path;
+
+    // above not works so I fixed the bug by below method
+    const videoFile1 = req.files.videoFile[0];
+    const thumbnail1 = req.files.thumbnail[0];
+
+    const videoFileLocalPath = videoFile1.path;
+    const thumbnailLocalPath = thumbnail1.path;
 
     if(!videoFileLocalPath){
         throw new ApiError(400, "videoFileLocalPath is required");
@@ -141,7 +150,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
         isPublished: false
     })
 
-    const videoUploaded = await video.findById(video._id);
+    const videoUploaded = await Video.findById(video._id);
 
     if(!videoUploaded){
         throw new ApiError(500, "videoUpload failed please try again !!!");
@@ -155,6 +164,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
 })
 
+// fixed bug here
 const getVideoById = asyncHandler(async (req, res) => {
     const { videoId } = req.params
 
@@ -169,7 +179,7 @@ const getVideoById = asyncHandler(async (req, res) => {
     const video = await Video.aggregate([
         {
             $match: {
-                _id: new mongoose.Schema.Types.ObjectId(videoId)
+                _id: new mongoose.Types.ObjectId(videoId)
             }
         },
         {
@@ -178,6 +188,13 @@ const getVideoById = asyncHandler(async (req, res) => {
                 localField: "_id",
                 foreignField: "video",
                 as: "likes"
+            }
+        },
+        {
+            $addFields: {
+                likesCount: {
+                    $size: "$likes"
+                }
             }
         },
         {
@@ -218,8 +235,8 @@ const getVideoById = asyncHandler(async (req, res) => {
                         $project: {
                             username: 1,
                             "avatar.url": 1,
-                            subscribersCount,
-                            isSubscribed
+                            subscribersCount: 1,
+                            isSubscribed: 1
                         }
                     }
                 ]
@@ -257,6 +274,7 @@ const getVideoById = asyncHandler(async (req, res) => {
             }
         }
     ]);
+    
 
     if (!video) {
         throw new ApiError(500, "failed to fetch video");
